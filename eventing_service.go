@@ -140,7 +140,8 @@ func (m *Manager) EventStoreConcrete() *eventsourcing.EventStore { return m.even
 // SetEventStore sets the domain audit log.
 func (m *Manager) SetEventStore(s *eventsourcing.EventStore) { m.eventing.SetStore(s) }
 
-// Projector returns the read-side projection of order/alert/position
-// aggregates. Always non-nil after Manager construction; starts empty and
-// populates as events flow through the dispatcher.
-func (m *Manager) Projector() *eventsourcing.Projector { return m.projector }
+// Tier B Step 5a (2026-05-16): Manager.Projector() removed — zero external
+// callers across kite-mcp-kc, kite-mcp-bootstrap, kite-mcp-usecases, and
+// kite-mcp-server. The projector field remains on Manager; internal users
+// read m.projector directly (manager_cqrs_register.go, manager_orders_
+// fallback.go). Re-introduce the accessor only when a need arises.
