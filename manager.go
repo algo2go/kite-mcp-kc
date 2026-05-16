@@ -3,9 +3,9 @@
 // Anchor 6 PR 6.15 collapsed manager.go to the constructor surface. The
 // Manager struct + sentinel errors + KiteSessionData alias moved to
 // kc/manager_struct.go; Config moved to kc/config.go; KiteConnect moved
-// to kc/kite_connect.go; truncKey moved to kc/util.go. The remaining
-// pointers (// X lives in Y) are listed at the bottom of the file as a
-// roadmap for new contributors.
+// to kc/kite_connect.go; truncKey moved to kc/internal/util/ (exported
+// as util.Trunc at v0.1.1). The remaining pointers (// X lives in Y)
+// are listed at the bottom of the file as a roadmap for new contributors.
 package kc
 
 import (
@@ -131,7 +131,7 @@ func NewManager(apiKey, apiSecret string, logger *slog.Logger) (*Manager, error)
 //   Manager struct + KiteSessionData alias     → kc/manager_struct.go
 //   Constants + sentinel errors                → kc/manager_struct.go
 //   KiteConnect struct + NewKiteConnect helper → kc/kite_connect.go
-//   truncKey helper                            → kc/util.go
+//   Trunc helper (was truncKey)                → kc/internal/util/util.go
 //   Service / accessor methods                 → kc/manager_accessors.go
 //   IsLocalMode / ExternalURL / AdminSecretPath / DevMode / APIKey / OpenBrowser → kc/config_manager.go
 //   initializeTemplates / initializeSessionSigner / Shutdown / setupTemplates / sessionDBAdapter → kc/manager_lifecycle.go

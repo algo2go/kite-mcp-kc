@@ -3,6 +3,7 @@ package kc
 import (
 	"testing"
 
+	"github.com/algo2go/kite-mcp-kc/internal/util"
 )
 
 // newTestInstrumentsManager creates a fast test instruments manager without HTTP calls
@@ -104,9 +105,9 @@ func TestNewConfigConstructor(t *testing.T) {
 
 
 // ===========================================================================
-// Manager — truncKey
+// internal/util — Trunc (relocated from kc.truncKey at v0.1.1)
 // ===========================================================================
-func TestTruncKey(t *testing.T) {
+func TestTrunc(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -120,9 +121,9 @@ func TestTruncKey(t *testing.T) {
 		{"", 4, ""},
 	}
 	for _, tc := range tests {
-		got := truncKey(tc.input, tc.n)
+		got := util.Trunc(tc.input, tc.n)
 		if got != tc.want {
-			t.Errorf("truncKey(%q, %d) = %q, want %q", tc.input, tc.n, got, tc.want)
+			t.Errorf("util.Trunc(%q, %d) = %q, want %q", tc.input, tc.n, got, tc.want)
 		}
 	}
 }

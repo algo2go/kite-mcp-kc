@@ -5,6 +5,7 @@ import (
 	"log/slog"
 
 	"github.com/algo2go/kite-mcp-domain"
+	"github.com/algo2go/kite-mcp-kc/internal/util"
 	"github.com/algo2go/kite-mcp-registry"
 )
 
@@ -189,7 +190,7 @@ func (cs *CredentialService) BackfillRegistryFromCredentials() {
 		if _, found := cs.registryStore.GetByAPIKeyAnyStatus(cred.APIKey); found {
 			continue // already in registry
 		}
-		regID := fmt.Sprintf("migrated-%s-%s", cred.Email, truncKey(cred.APIKey, 8))
+		regID := fmt.Sprintf("migrated-%s-%s", cred.Email, util.Trunc(cred.APIKey, 8))
 		if err := cs.registryStore.Register(&registry.AppRegistration{
 			ID:           regID,
 			APIKey:       cred.APIKey,
