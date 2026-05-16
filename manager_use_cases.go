@@ -1,17 +1,23 @@
 package kc
 
-import "github.com/algo2go/kite-mcp-usecases"
+import (
+	"github.com/algo2go/kite-mcp-usecases"
+)
 
 // manager_use_cases.go holds the startup-once construction of use case
 // instances that the CommandBus / QueryBus handlers dispatch into.
 //
-// Wave D Phase 1 Slice D2 introduces this seam for the three order-
-// write use cases (PlaceOrder / ModifyOrder / CancelOrder). Subsequent
-// slices migrate the remaining 11 ctx-bound use cases per
-// .research/wave-d-resolver-refactor-plan.md §6.
+// Tier B Step 2 (2026-05-16): the 13 Wave D Phase 1 use cases were
+// absorbed into OrderService (see kc/order_service.go). This file now
+// holds the thin Manager-side init shim that gathers the dependencies
+// available at this phase of NewWithOptions and forwards them to
+// OrderService.InitUseCases. The construction sequence inside
+// OrderService mirrors the prior monolithic init body verbatim — no
+// behavior change.
 //
-// Preconditions (load-bearing):
+// Preconditions (load-bearing, unchanged):
 //   - sessionSvc must be non-nil → satisfied after initFocusedServices
+//   - OrderSvc must be non-nil → wired in initFocusedServices
 //   - riskGuard MAY be nil → use cases are nil-safe per their docs
 //   - eventing must be non-nil (the facade itself; its Dispatcher() is
 //     also nil-safe because the use case wraps the dispatch path)
@@ -20,151 +26,42 @@ import "github.com/algo2go/kite-mcp-usecases"
 //     out; the LotSizeLookup wiring uses InstrumentsManagerConcrete()
 //     which is nil-safe at the call site.
 //
-// Mutations to riskGuard / eventStore / Instruments after this helper
-// runs do NOT propagate to the constructed use cases. That's a behaviour
-// shift from the prior per-request-construction pattern, but it matches
-// the eventual Wire/fx end-state where use cases are graph-resolved
-// once at startup. Tests that exercise "set X to nil mid-flight" must
-// reconstruct the manager (the standing pattern outside Wave D scope)
-// or use the deprecated SetX setters.
-
-// initOrderUseCases constructs the order + GTT write use cases once and
-// stores them on the Manager. registerOrderCommands / the GTT handler
-// triple then dispatch into these instances rather than constructing
-// fresh ones per request.
+// EVENT-DISPATCHER NOTE (load-bearing, unchanged):
 //
-// Called from NewWithOptions after initFocusedServices (which builds
-// sessionSvc) and BEFORE registerCQRSHandlers (which wires the
-// CommandBus handlers that read these fields).
-//
-// EVENT-DISPATCHER NOTE (load-bearing):
-//
-// Production wiring (app/wire.go:384) calls
+// Production wiring (app/wire.go) calls
 // kcManager.SetEventDispatcher(eventDispatcher) AFTER kc.NewWithOptions
 // returns. At init-time below, m.eventing.Dispatcher() returns nil. We
 // pass nil here; EventingService.SetDispatcher then propagates the real
-// dispatcher into each use case via its SetEventDispatcher setter when
-// app/wire.go finishes wiring. Without this two-phase dispatcher
+// dispatcher into each use case via OrderService.PropagateDispatcher
+// when app/wire.go finishes wiring. Without this two-phase dispatcher
 // wiring, OrderPlaced / GTTPlaced / etc. events would silently drop
 // because the use case captured a nil pointer at construction.
-//
-// Tests that don't call SetEventDispatcher get use cases with nil
-// dispatchers — domain events are skipped, matching the prior
-// per-request-construction behaviour where tests rarely wired one.
+
+// initOrderUseCases gathers the dependencies available at this phase
+// and forwards them to OrderService.InitUseCases. Called from
+// NewWithOptions after initFocusedServices (which constructs OrderSvc
+// + SessionSvc) and BEFORE registerCQRSHandlers (which wires the
+// CommandBus handlers that read OrderSvc.* fields).
 func (m *Manager) initOrderUseCases() {
-	// PlaceOrder — full pipeline (instruments lookup, riskguard, broker,
-	// event dispatch, optional event-store append).
-	placeUC := usecases.NewPlaceOrderUseCase(
-		m.SessionSvc,
-		m.riskGuard,
-		m.eventing.Dispatcher(), // nil at init-time; EventingService.SetDispatcher propagates later
-		m.Logger,
-	)
-	if m.eventStore != nil {
-		placeUC.SetEventStore(m.eventStore)
-	}
+	var lotLookup usecases.LotSizeLookup
 	if im := m.InstrumentsManagerConcrete(); im != nil {
-		placeUC.SetLotSizeLookup(&lotSizeLookupAdapter{mgr: im})
+		lotLookup = &lotSizeLookupAdapter{mgr: im}
 	}
-	m.placeOrderUC = placeUC
 
-	// ModifyOrder — same pipeline minus the instruments lookup (modify
-	// only changes price/qty, not instrument metadata).
-	modifyUC := usecases.NewModifyOrderUseCase(
-		m.SessionSvc,
-		m.riskGuard,
-		m.eventing.Dispatcher(),
-		m.Logger,
-	)
-	if m.eventStore != nil {
-		modifyUC.SetEventStore(m.eventStore)
-	}
-	m.modifyOrderUC = modifyUC
-
-	// CancelOrder — no riskguard (cancel is always allowed; riskguard
-	// only gates outbound state-creating actions). No instruments lookup.
-	cancelUC := usecases.NewCancelOrderUseCase(
-		m.SessionSvc,
-		m.eventing.Dispatcher(),
-		m.Logger,
-	)
-	if m.eventStore != nil {
-		cancelUC.SetEventStore(m.eventStore)
-	}
-	m.cancelOrderUC = cancelUC
-
-	// PlaceGTT / ModifyGTT / DeleteGTT — Slice D3. GTT use case
-	// constructors take only (resolver, logger); event dispatcher and
-	// event store are wired post-construction via SetX setters.
-	placeGTT := usecases.NewPlaceGTTUseCase(m.SessionSvc, m.Logger)
-	if m.eventStore != nil {
-		placeGTT.SetEventStore(m.eventStore)
-	}
-	if d := m.eventing.Dispatcher(); d != nil {
-		placeGTT.SetEventDispatcher(d)
-	}
-	m.placeGTTUC = placeGTT
-
-	modifyGTT := usecases.NewModifyGTTUseCase(m.SessionSvc, m.Logger)
-	if m.eventStore != nil {
-		modifyGTT.SetEventStore(m.eventStore)
-	}
-	if d := m.eventing.Dispatcher(); d != nil {
-		modifyGTT.SetEventDispatcher(d)
-	}
-	m.modifyGTTUC = modifyGTT
-
-	deleteGTT := usecases.NewDeleteGTTUseCase(m.SessionSvc, m.Logger)
-	if m.eventStore != nil {
-		deleteGTT.SetEventStore(m.eventStore)
-	}
-	if d := m.eventing.Dispatcher(); d != nil {
-		deleteGTT.SetEventDispatcher(d)
-	}
-	m.deleteGTTUC = deleteGTT
-
-	// ClosePosition / CloseAllPositions — Slice D4. Both take
-	// (resolver, guard, events, logger); event dispatcher comes via
-	// the constructor (nil at init, propagated by SetDispatcher).
-	closePos := usecases.NewClosePositionUseCase(
-		m.SessionSvc,
-		m.riskGuard,
-		m.eventing.Dispatcher(),
-		m.Logger,
-	)
-	m.closePositionUC = closePos
-
-	closeAll := usecases.NewCloseAllPositionsUseCase(
-		m.SessionSvc,
-		m.riskGuard,
-		m.eventing.Dispatcher(),
-		m.Logger,
-	)
-	m.closeAllPositionsUC = closeAll
-
-	// Margin queries — Slice D5. All three are read-only (compute margin /
-	// charges); no event dispatch, no riskguard, no event store.
-	m.getOrderMarginsUC = usecases.NewGetOrderMarginsUseCase(m.SessionSvc, m.Logger)
-	m.getBasketMarginsUC = usecases.NewGetBasketMarginsUseCase(m.SessionSvc, m.Logger)
-	m.getOrderChargesUC = usecases.NewGetOrderChargesUseCase(m.SessionSvc, m.Logger)
-
-	// Widget queries — Slice D6. Two of the four widget use cases are
-	// fully hoistable (single dependency that's stable for Manager
-	// lifetime); the other two (Activity, Orders) keep per-dispatch
-	// construction so the ctx-bound audit-store override (test contract
-	// via cqrs.WithWidgetAuditStore) keeps working. See the field-doc
-	// comment in manager.go for the design tradeoff.
-	m.getPortfolioForWidgetUC = usecases.NewGetPortfolioForWidgetUseCase(m.SessionSvc, m.Logger)
-
-	// Alerts widget needs the alert store. Manager-side initAlertSystem
-	// runs before initOrderUseCases so m.alertStore is non-nil here in
-	// every code path. Defensive nil-check anyway — match existing
-	// handler pattern that returns nil result when no store is wired.
+	// alertStore is nil-tolerant: OrderService.InitUseCases skips
+	// GetAlertsForWidgetUC when the store is nil, matching pre-Step-2
+	// behaviour. *alerts.Store implements usecases.WidgetAlertStore
+	// structurally (it has List(email) []*alerts.Alert).
+	var widgetAlertStore usecases.WidgetAlertStore
 	if m.alertStore != nil {
-		m.getAlertsForWidgetUC = usecases.NewGetAlertsForWidgetUseCase(
-			m.SessionSvc,
-			m.alertStore,
-			m.Logger,
-		)
+		widgetAlertStore = m.alertStore
 	}
+
+	m.OrderSvc.InitUseCases(
+		m.riskGuard,
+		m.eventing.Dispatcher(), // nil at init-time; PropagateDispatcher fills later
+		m.eventStore,
+		lotLookup,
+		widgetAlertStore,
+	)
 }

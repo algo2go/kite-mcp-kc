@@ -4,7 +4,6 @@ import (
 	"github.com/algo2go/kite-mcp-domain"
 	"github.com/algo2go/kite-mcp-eventsourcing"
 	"github.com/algo2go/kite-mcp-alerts"
-	"github.com/algo2go/kite-mcp-usecases"
 )
 
 // EventingService groups the domain event dispatcher and append-only event
@@ -41,15 +40,12 @@ type EventingService struct {
 	getSessionSvc      func() *SessionService
 	getTrailingStopMgr func() *alerts.TrailingStopManager
 
-	// Wave D propagation: order/GTT/position-exit use cases.
-	getPlaceOrderUC         func() *usecases.PlaceOrderUseCase
-	getModifyOrderUC        func() *usecases.ModifyOrderUseCase
-	getCancelOrderUC        func() *usecases.CancelOrderUseCase
-	getPlaceGTTUC           func() *usecases.PlaceGTTUseCase
-	getModifyGTTUC          func() *usecases.ModifyGTTUseCase
-	getDeleteGTTUC          func() *usecases.DeleteGTTUseCase
-	getClosePositionUC      func() *usecases.ClosePositionUseCase
-	getCloseAllPositionsUC  func() *usecases.CloseAllPositionsUseCase
+	// Tier B Step 2 (2026-05-16): Wave D propagation collapsed from 8
+	// individual UC closures into a single OrderService accessor. The 8
+	// UC fields now live on OrderService; SetDispatcher calls
+	// OrderSvc.PropagateDispatcher() which fans the dispatcher into each
+	// UC nil-safely.
+	getOrderSvc func() *OrderService
 }
 
 // newEventingService constructs EventingService with closures over the
@@ -67,14 +63,9 @@ func newEventingService(m *Manager) *EventingService {
 		getSessionSvc:      func() *SessionService { return m.SessionSvc },
 		getTrailingStopMgr: func() *alerts.TrailingStopManager { return m.trailingStopMgr },
 
-		getPlaceOrderUC:        func() *usecases.PlaceOrderUseCase { return m.placeOrderUC },
-		getModifyOrderUC:       func() *usecases.ModifyOrderUseCase { return m.modifyOrderUC },
-		getCancelOrderUC:       func() *usecases.CancelOrderUseCase { return m.cancelOrderUC },
-		getPlaceGTTUC:          func() *usecases.PlaceGTTUseCase { return m.placeGTTUC },
-		getModifyGTTUC:         func() *usecases.ModifyGTTUseCase { return m.modifyGTTUC },
-		getDeleteGTTUC:         func() *usecases.DeleteGTTUseCase { return m.deleteGTTUC },
-		getClosePositionUC:     func() *usecases.ClosePositionUseCase { return m.closePositionUC },
-		getCloseAllPositionsUC: func() *usecases.CloseAllPositionsUseCase { return m.closeAllPositionsUC },
+		// Tier B Step 2: single closure over OrderSvc replaces the 8
+		// per-UC closures. OrderSvc.PropagateDispatcher() handles fan-out.
+		getOrderSvc: func() *OrderService { return m.OrderSvc },
 	}
 }
 
@@ -114,32 +105,13 @@ func (e *EventingService) SetDispatcher(d *domain.EventDispatcher) {
 	if tsm := e.getTrailingStopMgr(); tsm != nil {
 		tsm.SetEventDispatcher(d)
 	}
-	// Wave D propagation: order use cases.
-	if uc := e.getPlaceOrderUC(); uc != nil {
-		uc.SetEventDispatcher(d)
-	}
-	if uc := e.getModifyOrderUC(); uc != nil {
-		uc.SetEventDispatcher(d)
-	}
-	if uc := e.getCancelOrderUC(); uc != nil {
-		uc.SetEventDispatcher(d)
-	}
-	// Wave D propagation: GTT use cases.
-	if uc := e.getPlaceGTTUC(); uc != nil {
-		uc.SetEventDispatcher(d)
-	}
-	if uc := e.getModifyGTTUC(); uc != nil {
-		uc.SetEventDispatcher(d)
-	}
-	if uc := e.getDeleteGTTUC(); uc != nil {
-		uc.SetEventDispatcher(d)
-	}
-	// Wave D propagation: position-exit use cases.
-	if uc := e.getClosePositionUC(); uc != nil {
-		uc.SetEventDispatcher(d)
-	}
-	if uc := e.getCloseAllPositionsUC(); uc != nil {
-		uc.SetEventDispatcher(d)
+	// Tier B Step 2 (2026-05-16): Wave D propagation into the 8 dispatch-
+	// aware use cases now flows through OrderService.PropagateDispatcher.
+	// The OrderService holds the UC fields and performs the same 8 nil-
+	// safe SetEventDispatcher calls internally. OrderSvc itself is nil-
+	// tolerant (early-init path before initFocusedServices builds it).
+	if os := e.getOrderSvc(); os != nil {
+		os.PropagateDispatcher(d)
 	}
 }
 

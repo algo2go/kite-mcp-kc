@@ -49,21 +49,21 @@ func (m *Manager) registerEscapeQueries() error {
 
 	if err := m.queryBus.Register(reflect.TypeFor[cqrs.GetOrderMarginsQuery](), func(ctx context.Context, msg any) (any, error) {
 		q := msg.(cqrs.GetOrderMarginsQuery)
-		return m.getOrderMarginsUC.Execute(ctx, q)
+		return m.OrderSvc.GetOrderMarginsUC.Execute(ctx, q)
 	}); err != nil {
 		return err
 	}
 
 	if err := m.queryBus.Register(reflect.TypeFor[cqrs.GetBasketMarginsQuery](), func(ctx context.Context, msg any) (any, error) {
 		q := msg.(cqrs.GetBasketMarginsQuery)
-		return m.getBasketMarginsUC.Execute(ctx, q)
+		return m.OrderSvc.GetBasketMarginsUC.Execute(ctx, q)
 	}); err != nil {
 		return err
 	}
 
 	if err := m.queryBus.Register(reflect.TypeFor[cqrs.GetOrderChargesQuery](), func(ctx context.Context, msg any) (any, error) {
 		q := msg.(cqrs.GetOrderChargesQuery)
-		return m.getOrderChargesUC.Execute(ctx, q)
+		return m.OrderSvc.GetOrderChargesUC.Execute(ctx, q)
 	}); err != nil {
 		return err
 	}
@@ -77,7 +77,7 @@ func (m *Manager) registerEscapeQueries() error {
 
 	if err := m.queryBus.Register(reflect.TypeFor[cqrs.GetPortfolioForWidgetQuery](), func(ctx context.Context, msg any) (any, error) {
 		q := msg.(cqrs.GetPortfolioForWidgetQuery)
-		return m.getPortfolioForWidgetUC.Execute(ctx, cqrs.GetWidgetPortfolioQuery{Email: q.Email})
+		return m.OrderSvc.GetPortfolioForWidgetUC.Execute(ctx, cqrs.GetWidgetPortfolioQuery{Email: q.Email})
 	}); err != nil {
 		return err
 	}
@@ -119,10 +119,10 @@ func (m *Manager) registerEscapeQueries() error {
 	// pre-D6 handler contract.
 	if err := m.queryBus.Register(reflect.TypeFor[cqrs.GetAlertsForWidgetQuery](), func(ctx context.Context, msg any) (any, error) {
 		q := msg.(cqrs.GetAlertsForWidgetQuery)
-		if m.getAlertsForWidgetUC == nil {
+		if m.OrderSvc.GetAlertsForWidgetUC == nil {
 			return nil, nil
 		}
-		return m.getAlertsForWidgetUC.Execute(ctx, cqrs.GetWidgetAlertsQuery{Email: q.Email})
+		return m.OrderSvc.GetAlertsForWidgetUC.Execute(ctx, cqrs.GetWidgetAlertsQuery{Email: q.Email})
 	}); err != nil {
 		return err
 	}

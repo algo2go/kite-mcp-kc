@@ -24,7 +24,7 @@ func (m *Manager) registerExitCommands() error {
 		if !ok {
 			return nil, fmt.Errorf("cqrs: unexpected command type %T", msg)
 		}
-		return m.closePositionUC.ExecuteCommand(ctx, cmd)
+		return m.OrderSvc.ClosePositionUC.ExecuteCommand(ctx, cmd)
 	}); err != nil {
 		return err
 	}
@@ -35,7 +35,7 @@ func (m *Manager) registerExitCommands() error {
 		if !ok {
 			return nil, fmt.Errorf("cqrs: unexpected command type %T", msg)
 		}
-		return m.closeAllPositionsUC.ExecuteCommand(ctx, cmd)
+		return m.OrderSvc.CloseAllPositionsUC.ExecuteCommand(ctx, cmd)
 	}); err != nil {
 		return err
 	}

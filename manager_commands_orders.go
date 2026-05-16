@@ -73,7 +73,7 @@ func (m *Manager) registerOrderCommands() error {
 		if !ok {
 			return nil, fmt.Errorf("cqrs: unexpected command type %T", msg)
 		}
-		return m.placeOrderUC.Execute(ctx, cmd)
+		return m.OrderSvc.PlaceOrderUC.Execute(ctx, cmd)
 	}); err != nil {
 		return err
 	}
@@ -84,7 +84,7 @@ func (m *Manager) registerOrderCommands() error {
 		if !ok {
 			return nil, fmt.Errorf("cqrs: unexpected command type %T", msg)
 		}
-		return m.modifyOrderUC.Execute(ctx, cmd)
+		return m.OrderSvc.ModifyOrderUC.Execute(ctx, cmd)
 	}); err != nil {
 		return err
 	}
@@ -95,7 +95,7 @@ func (m *Manager) registerOrderCommands() error {
 		if !ok {
 			return nil, fmt.Errorf("cqrs: unexpected command type %T", msg)
 		}
-		return m.cancelOrderUC.Execute(ctx, cmd)
+		return m.OrderSvc.CancelOrderUC.Execute(ctx, cmd)
 	}); err != nil {
 		return err
 	}
@@ -111,7 +111,7 @@ func (m *Manager) registerOrderCommands() error {
 		if !ok {
 			return nil, fmt.Errorf("cqrs: unexpected command type %T", msg)
 		}
-		return m.placeGTTUC.Execute(ctx, cmd)
+		return m.OrderSvc.PlaceGTTUC.Execute(ctx, cmd)
 	}); err != nil {
 		return err
 	}
@@ -122,7 +122,7 @@ func (m *Manager) registerOrderCommands() error {
 		if !ok {
 			return nil, fmt.Errorf("cqrs: unexpected command type %T", msg)
 		}
-		return m.modifyGTTUC.Execute(ctx, cmd)
+		return m.OrderSvc.ModifyGTTUC.Execute(ctx, cmd)
 	}); err != nil {
 		return err
 	}
@@ -133,7 +133,7 @@ func (m *Manager) registerOrderCommands() error {
 		if !ok {
 			return nil, fmt.Errorf("cqrs: unexpected command type %T", msg)
 		}
-		return m.deleteGTTUC.Execute(ctx, cmd)
+		return m.OrderSvc.DeleteGTTUC.Execute(ctx, cmd)
 	}); err != nil {
 		return err
 	}

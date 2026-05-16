@@ -17,7 +17,6 @@ import (
 	"github.com/algo2go/kite-mcp-registry"
 	"github.com/algo2go/kite-mcp-riskguard"
 	"github.com/algo2go/kite-mcp-ticker"
-	"github.com/algo2go/kite-mcp-usecases"
 	"github.com/algo2go/kite-mcp-users"
 	"github.com/algo2go/kite-mcp-watchlist"
 )
@@ -120,67 +119,15 @@ type Manager struct {
 	adminSecretPath   string
 	devMode           bool
 
-	// Wave D Phase 1 Slice D2: order-write use cases hoisted from
-	// per-request construction inside CommandBus handlers to startup-once
-	// fields. The handlers in kc/manager_commands_orders.go reach through
-	// these instead of calling usecases.NewXxx() per dispatch. Constructed
-	// in initOrderUseCases (kc/manager_use_cases.go) after the Manager has
-	// sessionSvc / riskGuard / eventing.Dispatcher available — see the
-	// init helper for the full preconditions list. Wire/fx-compatible by
-	// design: each field is a startup-once value with stable dependencies.
+	// Tier B Step 2 (2026-05-16): the 13 Wave D Phase 1 use-case fields
+	// that previously lived here have been absorbed into OrderService.
+	// They are now reachable as m.OrderSvc.{PlaceOrderUC, ModifyOrderUC,
+	// CancelOrderUC, PlaceGTTUC, ModifyGTTUC, DeleteGTTUC, ClosePositionUC,
+	// CloseAllPositionsUC, GetOrderMarginsUC, GetBasketMarginsUC,
+	// GetOrderChargesUC, GetPortfolioForWidgetUC, GetAlertsForWidgetUC}.
+	// Manager field count reduced 63 → 50 by this move.
 	//
-	// Naming convention: <domain>UC for the use-case fields. By the
-	// end of Wave D Phase 1 (Slice D7), all 13 previously per-request
-	// use cases either live on Manager (12 fields below) or stay
-	// per-dispatch for principled reasons (Activity widget +
-	// ctx-bound audit-store override, Orders widget same).
-	placeOrderUC  *usecases.PlaceOrderUseCase
-	modifyOrderUC *usecases.ModifyOrderUseCase
-	cancelOrderUC *usecases.CancelOrderUseCase
-
-	// Wave D Phase 1 Slice D3: GTT (Good Till Triggered) write use cases
-	// hoisted from per-request construction. Same pattern as the order
-	// triple above. GTT use cases additionally consume the
-	// eventDispatcher for typed GTTPlaced/Modified/Cancelled events
-	// (wired at construction in initOrderUseCases).
-	placeGTTUC  *usecases.PlaceGTTUseCase
-	modifyGTTUC *usecases.ModifyGTTUseCase
-	deleteGTTUC *usecases.DeleteGTTUseCase
-
-	// Wave D Phase 1 Slice D4: position-exit write use cases hoisted
-	// from per-request construction. ClosePosition closes one position
-	// by placing an opposite MARKET order; CloseAllPositions iterates
-	// through filtered positions placing one opposite per slot. Both
-	// run riskguard before the broker call.
-	closePositionUC     *usecases.ClosePositionUseCase
-	closeAllPositionsUC *usecases.CloseAllPositionsUseCase
-
-	// Wave D Phase 1 Slice D5: margin-query use cases hoisted from
-	// per-request construction. All three are read-side queries
-	// (estimate margin / charges before placing an order); broker
-	// resolution flows through m.SessionSvc on dispatch.
-	getOrderMarginsUC  *usecases.GetOrderMarginsUseCase
-	getBasketMarginsUC *usecases.GetBasketMarginsUseCase
-	getOrderChargesUC  *usecases.GetOrderChargesUseCase
-
-	// Wave D Phase 1 Slice D6: widget read-side use cases.
-	//
-	// GetPortfolioForWidget — clean hoist: only depends on the broker
-	// resolver. Constructed once in initOrderUseCases.
-	//
-	// GetAlertsForWidget — hoist: depends on broker resolver +
-	// alertStore (a Manager field, stable for the manager's lifetime
-	// after initAlertSystem runs). Constructed once.
-	//
-	// GetOrdersForWidget is intentionally NOT hoisted: its second
-	// dependency (audit store) can come either from a ctx-bound
-	// override (test-isolation contract via cqrs.WithWidgetAuditStore)
-	// OR from the Manager's audit store. Hoisting at startup would
-	// lock the audit store choice and break the test fixture. The
-	// handler keeps per-dispatch use case construction but uses
-	// m.SessionSvc as the BrokerResolver (post-Wave-D pattern).
-	// GetActivityForWidget has no broker resolver dimension at all so
-	// it's not a Wave D site; it stays per-dispatch construction.
-	getPortfolioForWidgetUC *usecases.GetPortfolioForWidgetUseCase
-	getAlertsForWidgetUC    *usecases.GetAlertsForWidgetUseCase
+	// EventDispatcher propagation (production wire.go calls
+	// SetEventDispatcher AFTER kc.NewWithOptions returns) now flows
+	// through OrderService.PropagateDispatcher — see EventingService.
 }
