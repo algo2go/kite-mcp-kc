@@ -33,15 +33,15 @@ func (m *Manager) initTelegramNotifier(cfg Config) {
 	var notifier *alerts.TelegramNotifier
 	var tgErr error
 	if cfg.BotFactory != nil {
-		notifier, tgErr = alerts.NewTelegramNotifierWithFactory(cfg.TelegramBotToken, m.alertStore, cfg.Logger, cfg.BotFactory)
+		notifier, tgErr = alerts.NewTelegramNotifierWithFactory(cfg.TelegramBotToken, m.AlertSvc.alertStore, cfg.Logger, cfg.BotFactory)
 	} else {
-		notifier, tgErr = alerts.NewTelegramNotifier(cfg.TelegramBotToken, m.alertStore, cfg.Logger)
+		notifier, tgErr = alerts.NewTelegramNotifier(cfg.TelegramBotToken, m.AlertSvc.alertStore, cfg.Logger)
 	}
 	if tgErr != nil {
 		cfg.Logger.Warn("Telegram notifier failed to initialize", "error", tgErr)
 		return
 	}
-	m.telegramNotifier = notifier
+	m.AlertSvc.telegramNotifier = notifier
 }
 
 // initTickerService constructs the per-user WebSocket ticker with the
@@ -50,8 +50,8 @@ func (m *Manager) initTickerService(cfg Config) {
 	m.tickerService = ticker.New(ticker.Config{
 		Logger: cfg.Logger,
 		OnTick: func(email string, tick models.Tick) {
-			m.alertEvaluator.Evaluate(email, tick)
-			m.trailingStopMgr.Evaluate(email, tick)
+			m.AlertSvc.alertEvaluator.Evaluate(email, tick)
+			m.AlertSvc.trailingStopMgr.Evaluate(email, tick)
 		},
 	})
 }
@@ -85,23 +85,19 @@ func (m *Manager) initFocusedServices(cfg Config, instrumentsManager *instrument
 	m.PortfolioSvc = NewPortfolioService(m.SessionSvc, cfg.Logger)
 	m.OrderSvc = NewOrderService(m.SessionSvc, cfg.Logger)
 
-	// Initialize alert service (wraps alert-related components)
-	m.AlertSvc = NewAlertService(AlertServiceConfig{
-		AlertStore:       m.alertStore,
-		AlertEvaluator:   m.alertEvaluator,
-		TrailingStopMgr:  m.trailingStopMgr,
-		TelegramNotifier: m.telegramNotifier,
-	})
+	// AlertSvc was constructed empty in newEmptyManager and populated
+	// in-place by the earlier alert/persistence/telegram init phases
+	// (Tier B Step 3). Nothing to do here for the alert subsystem.
 }
 
 // initSessionPersistence threads the shared alert DB into the session
 // registry so MCP sessions survive restart. No-op when persistence is
 // disabled.
 func (m *Manager) initSessionPersistence(cfg Config) {
-	if m.alertDB == nil {
+	if m.AlertSvc.alertDB == nil {
 		return
 	}
-	m.SessionManager.SetDB(&sessionDBAdapter{db: m.alertDB})
+	m.SessionManager.SetDB(&sessionDBAdapter{db: m.AlertSvc.alertDB})
 	if err := m.SessionManager.LoadFromDB(); err != nil {
 		cfg.Logger.Error("Failed to load sessions from DB", "error", err)
 	} else {

@@ -45,10 +45,10 @@ func (m *Manager) registerRemainingQueries() error {
 	// world, so we register defensively here. Register is last-write-wins on
 	// the reflect type key, matching the existing bus behavior.
 	if err := m.queryBus.Register(reflect.TypeFor[cqrs.GetAlertsQuery](), func(ctx context.Context, msg any) (any, error) {
-		if m.alertStore == nil {
+		if m.AlertSvc.alertStore == nil {
 			return nil, fmt.Errorf("cqrs: alert store not configured")
 		}
-		uc := usecases.NewListAlertsUseCase(m.alertStore, m.Logger)
+		uc := usecases.NewListAlertsUseCase(m.AlertSvc.alertStore, m.Logger)
 		return uc.Execute(ctx, msg.(cqrs.GetAlertsQuery))
 	}); err != nil {
 		return err
@@ -199,10 +199,10 @@ func (m *Manager) registerRemainingQueries() error {
 	// --- Trailing stops ---
 
 	if err := m.queryBus.Register(reflect.TypeFor[cqrs.ListTrailingStopsQuery](), func(ctx context.Context, msg any) (any, error) {
-		if m.trailingStopMgr == nil {
+		if m.AlertSvc.trailingStopMgr == nil {
 			return nil, fmt.Errorf("cqrs: trailing stop manager not configured")
 		}
-		uc := usecases.NewListTrailingStopsUseCase(m.trailingStopMgr, m.Logger)
+		uc := usecases.NewListTrailingStopsUseCase(m.AlertSvc.trailingStopMgr, m.Logger)
 		return uc.Execute(ctx, msg.(cqrs.ListTrailingStopsQuery))
 	}); err != nil {
 		return err

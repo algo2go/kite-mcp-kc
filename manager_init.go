@@ -69,6 +69,7 @@ func newEmptyManager(cfg Config) *Manager {
 		kiteClientFactory: &defaultKiteClientFactory{},
 		tokenStore:        NewKiteTokenStore(),
 		credentialStore:   NewKiteCredentialStore(),
+		AlertSvc:          NewEmptyAlertService(),
 		commandBus:        cqrs.NewInMemoryBus(cqrs.LoggingMiddleware(cfg.Logger)),
 		queryBus:          cqrs.NewInMemoryBus(cqrs.LoggingMiddleware(cfg.Logger)),
 	}

@@ -61,7 +61,7 @@ func newEventingService(m *Manager) *EventingService {
 
 		getProjector:       func() *eventsourcing.Projector { return m.projector },
 		getSessionSvc:      func() *SessionService { return m.SessionSvc },
-		getTrailingStopMgr: func() *alerts.TrailingStopManager { return m.trailingStopMgr },
+		getTrailingStopMgr: func() *alerts.TrailingStopManager { return m.AlertSvc.trailingStopMgr },
 
 		// Tier B Step 2: single closure over OrderSvc replaces the 8
 		// per-UC closures. OrderSvc.PropagateDispatcher() handles fan-out.

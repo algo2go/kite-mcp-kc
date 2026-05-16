@@ -19,17 +19,17 @@ import (
 // 0 behavior change.
 
 // initSideStores brings up the watchlist, user, and key-registry stores.
-// All three share the same SQLite DB (m.alertDB) when persistence is
+// All three share the same SQLite DB (m.AlertSvc.alertDB) when persistence is
 // enabled and fall back to in-memory when it isn't.
 func (m *Manager) initSideStores(cfg Config) {
 	// Initialize watchlist store
 	m.watchlistStore = watchlist.NewStore()
 	m.watchlistStore.SetLogger(cfg.Logger)
-	if m.alertDB != nil {
-		if err := watchlist.InitTables(m.alertDB); err != nil {
+	if m.AlertSvc.alertDB != nil {
+		if err := watchlist.InitTables(m.AlertSvc.alertDB); err != nil {
 			cfg.Logger.Error("Failed to create watchlist tables", "error", err)
 		} else {
-			m.watchlistStore.SetDB(m.alertDB)
+			m.watchlistStore.SetDB(m.AlertSvc.alertDB)
 			if err := m.watchlistStore.LoadFromDB(); err != nil {
 				cfg.Logger.Error("Failed to load watchlists from DB", "error", err)
 			} else {
@@ -41,8 +41,8 @@ func (m *Manager) initSideStores(cfg Config) {
 	// Initialize user store (RBAC, lifecycle)
 	m.userStore = users.NewStore()
 	m.userStore.SetLogger(cfg.Logger)
-	if m.alertDB != nil {
-		m.userStore.SetDB(m.alertDB)
+	if m.AlertSvc.alertDB != nil {
+		m.userStore.SetDB(m.AlertSvc.alertDB)
 		if err := m.userStore.InitTable(); err != nil {
 			cfg.Logger.Error("Failed to create users table", "error", err)
 		} else if err := m.userStore.LoadFromDB(); err != nil {
@@ -62,8 +62,8 @@ func (m *Manager) initSideStores(cfg Config) {
 	// Initialize key registry store (zero-config onboarding)
 	m.registryStore = registry.New()
 	m.registryStore.SetLogger(cfg.Logger)
-	if m.alertDB != nil {
-		m.registryStore.SetDB(m.alertDB)
+	if m.AlertSvc.alertDB != nil {
+		m.registryStore.SetDB(m.AlertSvc.alertDB)
 		if err := m.registryStore.LoadFromDB(); err != nil {
 			cfg.Logger.Error("Failed to load registry from DB", "error", err)
 		} else {
@@ -94,7 +94,7 @@ func (m *Manager) initCredentialService(cfg Config) {
 	// Wire the order modifier: creates a Kite client from cached tokens.
 	// This depends on CredentialSvc existing — that's why it lives here
 	// rather than in initTrailingStop above.
-	m.trailingStopMgr.SetModifier(func(email string) (alerts.KiteOrderModifier, error) {
+	m.AlertSvc.trailingStopMgr.SetModifier(func(email string) (alerts.KiteOrderModifier, error) {
 		apiKey := m.CredentialSvc.GetAPIKeyForEmail(email)
 		accessToken := m.CredentialSvc.GetAccessTokenForEmail(email)
 		if accessToken == "" {

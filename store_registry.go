@@ -83,7 +83,7 @@ func (s *StoreRegistry) AlertStoreConcrete() *alerts.Store { return s.m.AlertSvc
 func (s *StoreRegistry) TelegramStore() TelegramStoreInterface { return s.m.AlertSvc.AlertStore() }
 
 // AlertDB returns the optional SQLite database used for persistence.
-func (s *StoreRegistry) AlertDB() *alerts.DB { return s.m.alertDB }
+func (s *StoreRegistry) AlertDB() *alerts.DB { return s.m.AlertSvc.alertDB }
 
 // WatchlistStore returns the per-user watchlist store.
 func (s *StoreRegistry) WatchlistStore() WatchlistStoreInterface { return s.m.watchlistStore }

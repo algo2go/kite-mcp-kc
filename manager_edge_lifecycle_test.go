@@ -257,7 +257,7 @@ func TestNew_WithAlertDBPath_Gap(t *testing.T) {
 	}
 	defer m.Shutdown()
 
-	if m.alertDB == nil {
+	if m.AlertSvc.alertDB == nil {
 		t.Error("Expected alertDB to be initialized")
 	}
 	if m.tokenStore == nil {
@@ -397,7 +397,7 @@ func TestManager_ShutdownWithDB(t *testing.T) {
 	}
 
 	// Close the DB manually first to trigger error on Shutdown
-	m.alertDB.Close()
+	m.AlertSvc.alertDB.Close()
 	m.Shutdown() // should log error but not panic
 }
 

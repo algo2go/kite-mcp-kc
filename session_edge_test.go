@@ -1246,12 +1246,12 @@ func TestAlertTriggerCallback_WithAudit(t *testing.T) {
 	m := newTestManagerWithDB(t)
 
 	// Add an alert — the alert store's OnTrigger callback was wired by New()
-	_, err := m.alertStore.Add("trigger@test.com", "SBIN", "NSE", 779521, 500, "above")
+	_, err := m.AlertSvc.alertStore.Add("trigger@test.com", "SBIN", "NSE", 779521, 500, "above")
 	if err != nil {
 		t.Fatalf("Add alert: %v", err)
 	}
 
-	allAlerts := m.alertStore.List("trigger@test.com")
+	allAlerts := m.AlertSvc.alertStore.List("trigger@test.com")
 	if len(allAlerts) == 0 {
 		t.Error("Expected at least 1 alert")
 	}

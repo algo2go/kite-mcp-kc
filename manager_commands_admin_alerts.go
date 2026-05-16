@@ -147,7 +147,7 @@ func registerAdminAlertsCommandsOnBus(
 // registrar (Tier 2.3 slice 3/6).
 func (m *Manager) registerAlertCommands() error {
 	return registerAdminAlertsCommandsOnBus(m.commandBus, AdminAlertsRegistrarDeps{
-		AlertStore:        m.alertStore,
+		AlertStore:        m.AlertSvc.alertStore,
 		InstrumentsGetter: func() *instruments.Manager { return m.Instruments },
 		DispatcherGetter:  m.eventing.Dispatcher,
 		EventStoreGetter:  m.eventing.Store,

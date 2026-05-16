@@ -32,7 +32,7 @@ func (m *Manager) initPersistence(cfg Config) {
 	var alertDB *alerts.DB
 	if cfg.AlertDB != nil {
 		alertDB = cfg.AlertDB
-		m.ownsAlertDB = false
+		m.AlertSvc.ownsAlertDB = false
 	} else {
 		if cfg.AlertDBPath == "" {
 			return
@@ -43,9 +43,9 @@ func (m *Manager) initPersistence(cfg Config) {
 			return
 		}
 		alertDB = opened
-		m.ownsAlertDB = true
+		m.AlertSvc.ownsAlertDB = true
 	}
-	m.alertDB = alertDB
+	m.AlertSvc.alertDB = alertDB
 	// Set up credential encryption if a secret is provided
 	if cfg.EncryptionSecret != "" {
 		encKey, encErr := alerts.EnsureEncryptionSalt(alertDB, cfg.EncryptionSecret)
@@ -60,8 +60,8 @@ func (m *Manager) initPersistence(cfg Config) {
 			cfg.Logger.Info("Credential encryption enabled (with HKDF salt)")
 		}
 	}
-	m.alertStore.SetDB(alertDB)
-	if err := m.alertStore.LoadFromDB(); err != nil {
+	m.AlertSvc.alertStore.SetDB(alertDB)
+	if err := m.AlertSvc.alertStore.LoadFromDB(); err != nil {
 		cfg.Logger.Error("Failed to load alerts from DB", "error", err)
 	} else {
 		cfg.Logger.Info("Alerts loaded from database", "path", cfg.AlertDBPath)

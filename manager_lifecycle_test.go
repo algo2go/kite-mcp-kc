@@ -1257,13 +1257,13 @@ func TestNew_AlertCallback_Triggers(t *testing.T) {
 
 	// Add an alert and trigger it via the evaluator to cover the alert notify callback
 	email := "callback@test.com"
-	_, err = m.alertStore.Add(email, "RELIANCE", "NSE", 738561, 2500.0, alerts.DirectionAbove)
+	_, err = m.AlertSvc.alertStore.Add(email, "RELIANCE", "NSE", 738561, 2500.0, alerts.DirectionAbove)
 	if err != nil {
 		t.Fatalf("Add alert error: %v", err)
 	}
 
 	// Trigger via evaluator — price above target
-	m.alertEvaluator.Evaluate(email, models.Tick{InstrumentToken: 738561, LastPrice: 2550.0})
+	m.AlertSvc.alertEvaluator.Evaluate(email, models.Tick{InstrumentToken: 738561, LastPrice: 2550.0})
 }
 
 
@@ -1300,7 +1300,7 @@ func TestNew_TrailingStopOnModify_Triggers(t *testing.T) {
 		HighWaterMark:   2500,
 		CurrentStop:     2480,
 	}
-	_, err = m.trailingStopMgr.Add(ts)
+	_, err = m.AlertSvc.trailingStopMgr.Add(ts)
 	if err != nil {
 		t.Fatalf("Add trailing stop error: %v", err)
 	}
@@ -1310,7 +1310,7 @@ func TestNew_TrailingStopOnModify_Triggers(t *testing.T) {
 	// call the onModify callback. The modifier will get a real Kite client
 	// with the test token, and ModifyOrder will fail at the API level, but
 	// the callback closures in New() will still be exercised for the modifier path.
-	m.trailingStopMgr.Evaluate("trail@test.com", models.Tick{InstrumentToken: 738561, LastPrice: 2540.0})
+	m.AlertSvc.trailingStopMgr.Evaluate("trail@test.com", models.Tick{InstrumentToken: 738561, LastPrice: 2540.0})
 }
 
 

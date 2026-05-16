@@ -24,9 +24,9 @@ import (
 // initAlertEvaluator — the evaluator takes alertStore as a dependency.
 func (m *Manager) initAlertSystem(cfg Config) {
 	// Initialize alert system: store → notifier → evaluator → ticker
-	m.alertStore = alerts.NewStore(func(alert *alerts.Alert, currentPrice float64) {
-		if m.telegramNotifier != nil {
-			m.telegramNotifier.Notify(alert, currentPrice)
+	m.AlertSvc.alertStore = alerts.NewStore(func(alert *alerts.Alert, currentPrice float64) {
+		if m.AlertSvc.telegramNotifier != nil {
+			m.AlertSvc.telegramNotifier.Notify(alert, currentPrice)
 		}
 		// Log alert trigger to audit trail for SSE browser notifications.
 		// Alert-trigger callback runs from the alerts evaluator goroutine
@@ -57,13 +57,13 @@ func (m *Manager) initAlertSystem(cfg Config) {
 			})
 		}
 	})
-	m.alertStore.SetLogger(cfg.Logger)
+	m.AlertSvc.alertStore.SetLogger(cfg.Logger)
 }
 
 // initAlertEvaluator builds the tick→alert matcher. Depends on
 // alertStore existing (initAlertSystem runs earlier).
 func (m *Manager) initAlertEvaluator(cfg Config) {
-	m.alertEvaluator = alerts.NewEvaluator(m.alertStore, cfg.Logger)
+	m.AlertSvc.alertEvaluator = alerts.NewEvaluator(m.AlertSvc.alertStore, cfg.Logger)
 }
 
 // initTrailingStop creates the trailing stop manager and wires the
@@ -72,16 +72,16 @@ func (m *Manager) initAlertEvaluator(cfg Config) {
 // because it needs CredentialSvc, which isn't constructed yet at this
 // point in the phase order.
 func (m *Manager) initTrailingStop(cfg Config) {
-	m.trailingStopMgr = alerts.NewTrailingStopManager(cfg.Logger)
-	if m.alertDB != nil {
-		m.trailingStopMgr.SetDB(m.alertDB)
-		if err := m.trailingStopMgr.LoadFromDB(); err != nil {
+	m.AlertSvc.trailingStopMgr = alerts.NewTrailingStopManager(cfg.Logger)
+	if m.AlertSvc.alertDB != nil {
+		m.AlertSvc.trailingStopMgr.SetDB(m.AlertSvc.alertDB)
+		if err := m.AlertSvc.trailingStopMgr.LoadFromDB(); err != nil {
 			cfg.Logger.Error("Failed to load trailing stops from DB", "error", err)
 		}
 	}
 
 	// Wire trailing stop modification notification to Telegram + audit.
-	m.trailingStopMgr.SetOnModify(func(ts *alerts.TrailingStop, oldStop, newStop float64) {
+	m.AlertSvc.trailingStopMgr.SetOnModify(func(ts *alerts.TrailingStop, oldStop, newStop float64) {
 		// Log trailing stop modification to audit trail for SSE browser notifications.
 		// Trailing-stop callback runs from the trailing-stop manager
 		// goroutine with no request ctx in scope; service-ctx fallback.
@@ -103,10 +103,10 @@ func (m *Manager) initTrailingStop(cfg Config) {
 			})
 		}
 
-		if m.telegramNotifier == nil {
+		if m.AlertSvc.telegramNotifier == nil {
 			return
 		}
-		chatID, ok := m.alertStore.GetTelegramChatID(ts.Email)
+		chatID, ok := m.AlertSvc.alertStore.GetTelegramChatID(ts.Email)
 		if !ok {
 			return
 		}
@@ -126,7 +126,7 @@ func (m *Manager) initTrailingStop(cfg Config) {
 			ts.HighWaterMark,
 			ts.ModifyCount,
 		)
-		if err := m.telegramNotifier.SendHTMLMessage(chatID, msg); err != nil {
+		if err := m.AlertSvc.telegramNotifier.SendHTMLMessage(chatID, msg); err != nil {
 			m.Logger.Warn("Failed to send trailing stop Telegram notification",
 				"email", ts.Email, "error", err)
 		}

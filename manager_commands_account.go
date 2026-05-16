@@ -31,14 +31,14 @@ func (m *Manager) registerAccountCommands() error {
 		if m.tokenStore != nil {
 			deps.TokenStore = m.tokenStore
 		}
-		if m.alertStore != nil {
-			deps.AlertDeleter = m.alertStore
+		if m.AlertSvc.alertStore != nil {
+			deps.AlertDeleter = m.AlertSvc.alertStore
 		}
 		if m.watchlistStore != nil {
 			deps.WatchlistStore = m.watchlistStore
 		}
-		if m.trailingStopMgr != nil {
-			deps.TrailingStops = m.trailingStopMgr
+		if m.AlertSvc.trailingStopMgr != nil {
+			deps.TrailingStops = m.AlertSvc.trailingStopMgr
 		}
 		if m.paperEngine != nil {
 			deps.PaperEngine = m.paperEngine

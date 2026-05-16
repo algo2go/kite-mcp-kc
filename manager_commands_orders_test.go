@@ -105,7 +105,7 @@ func TestCommandBus_SetTrailingStop_NilManager_ReturnsError(t *testing.T) {
 	if err != nil {
 		t.Fatalf("newTestManager: %v", err)
 	}
-	mgr.trailingStopMgr = nil
+	mgr.AlertSvc.trailingStopMgr = nil
 
 	_, err = mgr.CommandBus().DispatchWithResult(context.Background(), cqrs.SetTrailingStopCommand{
 		Email:         "user@example.com",
@@ -136,7 +136,7 @@ func TestCommandBus_CancelTrailingStop_NilManager_ReturnsError(t *testing.T) {
 	// TrailingStopManager, but production deployments without SQLite leave
 	// it nil and we want to prove the CommandBus handler refuses to run in
 	// that case instead of panicking.
-	mgr.trailingStopMgr = nil
+	mgr.AlertSvc.trailingStopMgr = nil
 
 	_, err = mgr.CommandBus().DispatchWithResult(context.Background(), cqrs.CancelTrailingStopCommand{
 		Email:          "user@example.com",

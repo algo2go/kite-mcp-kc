@@ -62,8 +62,8 @@ func (m *Manager) Shutdown() {
 	// Only close DBs the manager opened itself. When AlertDB was supplied
 	// via Config.AlertDB the caller (app/wire.go) owns the lifecycle and
 	// will Close via its own LifecycleManager registration.
-	if m.alertDB != nil && m.ownsAlertDB {
-		if err := m.alertDB.Close(); err != nil {
+	if m.AlertSvc.alertDB != nil && m.AlertSvc.ownsAlertDB {
+		if err := m.AlertSvc.alertDB.Close(); err != nil {
 			m.Logger.Error("Failed to close alert DB", "error", err)
 		}
 	}

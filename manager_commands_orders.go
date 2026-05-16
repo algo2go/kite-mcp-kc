@@ -169,10 +169,10 @@ func (m *Manager) registerOrderCommands() error {
 		if !ok {
 			return nil, fmt.Errorf("cqrs: unexpected command type %T", msg)
 		}
-		if m.trailingStopMgr == nil {
+		if m.AlertSvc.trailingStopMgr == nil {
 			return nil, fmt.Errorf("cqrs: trailing stop manager not configured")
 		}
-		uc := usecases.NewSetTrailingStopUseCase(m.trailingStopMgr, m.Logger)
+		uc := usecases.NewSetTrailingStopUseCase(m.AlertSvc.trailingStopMgr, m.Logger)
 		if m.eventStore != nil {
 			uc.SetEventStore(m.eventStore)
 		}
@@ -190,10 +190,10 @@ func (m *Manager) registerOrderCommands() error {
 		if !ok {
 			return nil, fmt.Errorf("cqrs: unexpected command type %T", msg)
 		}
-		if m.trailingStopMgr == nil {
+		if m.AlertSvc.trailingStopMgr == nil {
 			return nil, fmt.Errorf("cqrs: trailing stop manager not configured")
 		}
-		uc := usecases.NewCancelTrailingStopUseCase(m.trailingStopMgr, m.Logger)
+		uc := usecases.NewCancelTrailingStopUseCase(m.AlertSvc.trailingStopMgr, m.Logger)
 		if m.eventStore != nil {
 			uc.SetEventStore(m.eventStore)
 		}

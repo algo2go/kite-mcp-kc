@@ -53,8 +53,8 @@ func (m *Manager) initOrderUseCases() {
 	// behaviour. *alerts.Store implements usecases.WidgetAlertStore
 	// structurally (it has List(email) []*alerts.Alert).
 	var widgetAlertStore usecases.WidgetAlertStore
-	if m.alertStore != nil {
-		widgetAlertStore = m.alertStore
+	if m.AlertSvc.alertStore != nil {
+		widgetAlertStore = m.AlertSvc.alertStore
 	}
 
 	m.OrderSvc.InitUseCases(

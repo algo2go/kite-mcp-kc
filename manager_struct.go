@@ -6,7 +6,6 @@ import (
 	"log/slog"
 
 	"github.com/algo2go/kite-mcp-metrics"
-	"github.com/algo2go/kite-mcp-alerts"
 	"github.com/algo2go/kite-mcp-audit"
 	"github.com/algo2go/kite-mcp-billing"
 	"github.com/algo2go/kite-mcp-cqrs"
@@ -92,15 +91,9 @@ type Manager struct {
 	tokenStore        *KiteTokenStore             // per-email Kite token cache
 	credentialStore   *KiteCredentialStore        // per-email Kite developer app credentials
 	tickerService     *ticker.Service             // per-user WebSocket ticker connections
-	alertStore        *alerts.Store               // per-user price alerts
-	alertEvaluator    *alerts.Evaluator           // tick-to-alert matcher
-	trailingStopMgr   *alerts.TrailingStopManager // trailing stop-loss manager
 	watchlistStore    *watchlist.Store            // per-user watchlists
 	userStore         *users.Store                // registered users (RBAC, lifecycle)
 	registryStore     *registry.Store             // pre-registered Kite app credentials (key registry)
-	telegramNotifier  *alerts.TelegramNotifier    // Telegram alert sender
-	alertDB           *alerts.DB                  // optional: SQLite persistence for alerts
-	ownsAlertDB       bool                        // true => Manager.Shutdown closes alertDB; false when supplied via Config.AlertDB
 	encryptionKey     []byte                      // AES-256 key derived via HKDF from cfg.EncryptionSecret; mirrors alertDB.encryptionKey for stores that encrypt outside the alerts.DB layer (e.g. users.Store TOTP secrets)
 	auditStore        *audit.Store                // optional: audit trail for synthetic events
 	riskGuard         *riskguard.Guard            // optional: financial safety controls
@@ -125,9 +118,18 @@ type Manager struct {
 	// CancelOrderUC, PlaceGTTUC, ModifyGTTUC, DeleteGTTUC, ClosePositionUC,
 	// CloseAllPositionsUC, GetOrderMarginsUC, GetBasketMarginsUC,
 	// GetOrderChargesUC, GetPortfolioForWidgetUC, GetAlertsForWidgetUC}.
-	// Manager field count reduced 63 → 50 by this move.
 	//
 	// EventDispatcher propagation (production wire.go calls
 	// SetEventDispatcher AFTER kc.NewWithOptions returns) now flows
 	// through OrderService.PropagateDispatcher — see EventingService.
+	//
+	// Tier B Step 3 (2026-05-16): the 6 raw alert subsystem fields that
+	// previously lived here (alertStore, alertEvaluator, trailingStopMgr,
+	// telegramNotifier, alertDB, ownsAlertDB) have been absorbed into
+	// AlertService. They are now reachable as m.AlertSvc.<Accessor>() or
+	// via the existing Manager-level delegators (m.AlertStore(),
+	// m.AlertDB(), m.TelegramNotifier(), m.TrailingStopManager(), etc.).
+	// Manager field count reduced 49 → 43 by this move. encryptionKey
+	// stays on Manager because it crosses cluster boundaries — also used
+	// for TOTP MFA secrets via users.Store (see kc/users/mfa.go).
 }
