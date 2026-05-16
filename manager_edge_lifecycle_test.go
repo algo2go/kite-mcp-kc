@@ -217,7 +217,7 @@ func TestManager_Getters(t *testing.T) {
 	if !m.IsLocalMode() {
 		t.Error("Expected local mode for default")
 	}
-	if m.SessionSigner == nil {
+	if m.Identity.Signer == nil {
 		t.Error("SessionSigner should not be nil")
 	}
 	if m.PaperEngineConcrete() != nil {
@@ -232,7 +232,7 @@ func TestManager_Getters(t *testing.T) {
 	if m.InvitationStore() != nil {
 		t.Error("InvitationStore should be nil")
 	}
-	if m.ManagedSessionSvc == nil {
+	if m.Identity.ManagedSession == nil {
 		t.Error("ManagedSessionSvc should not be nil")
 	}
 }
@@ -312,7 +312,7 @@ func TestNew_WithCustomSessionSigner_Gap(t *testing.T) {
 	}
 	defer m.Shutdown()
 
-	if m.SessionSigner != signer {
+	if m.Identity.Signer != signer {
 		t.Error("Expected custom session signer to be used")
 	}
 }

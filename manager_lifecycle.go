@@ -31,7 +31,7 @@ func (m *Manager) initializeTemplates() error {
 // initializeSessionSigner sets up HMAC session signing.
 func (m *Manager) initializeSessionSigner(customSigner *SessionSigner) error {
 	if customSigner != nil {
-		m.SessionSigner = customSigner
+		m.Identity.Signer = customSigner
 		return nil
 	}
 
@@ -39,7 +39,7 @@ func (m *Manager) initializeSessionSigner(customSigner *SessionSigner) error {
 	if err != nil {
 		return fmt.Errorf("failed to create session signer: %w", err)
 	}
-	m.SessionSigner = signer
+	m.Identity.Signer = signer
 	return nil
 }
 

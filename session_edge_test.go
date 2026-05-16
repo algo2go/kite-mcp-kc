@@ -261,7 +261,7 @@ func TestGetOrCreateSessionWithEmail_RestorePersistedSession(t *testing.T) {
 
 	// Create a session, then simulate a restart by setting Kite to nil
 	_, _, _ = m.GetOrCreateSessionWithEmail(sid, "restore@test.com")
-	raw, _ := m.SessionSvc.sessionManager.GetSessionData(sid)
+	raw, _ := m.Identity.Session.sessionManager.GetSessionData(sid)
 	kd := raw.(*KiteSessionData)
 	kd.Kite = nil // simulate DB reload where Kite is nil
 
@@ -297,7 +297,7 @@ func TestGetOrCreateSessionWithEmail_RestoreWithPreAuth(t *testing.T) {
 
 	sid := "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeee08"
 	_, _, _ = m.GetOrCreateSessionWithEmail(sid, "")
-	raw, _ := m.SessionSvc.sessionManager.GetSessionData(sid)
+	raw, _ := m.Identity.Session.sessionManager.GetSessionData(sid)
 	kd := raw.(*KiteSessionData)
 	kd.Kite = nil // simulate restart
 
@@ -384,7 +384,7 @@ func TestHandleKiteCallback_FullSuccess(t *testing.T) {
 	kd.Kite.SetBaseURI(ts.URL)
 
 	// Sign the session ID for the callback
-	signedID := m.SessionSigner.SignSessionID(sessionID)
+	signedID := m.Identity.Signer.SignSessionID(sessionID)
 
 	// Build callback URL
 	callbackURL := fmt.Sprintf("/callback?request_token=mock-request-token&session_id=%s", signedID)
@@ -414,7 +414,7 @@ func TestHandleKiteCallback_CompleteSessionFails(t *testing.T) {
 	kd, _ := m.GetSession(sessionID)
 	kd.Kite.SetBaseURI(ts.URL)
 
-	signedID := m.SessionSigner.SignSessionID(sessionID)
+	signedID := m.Identity.Signer.SignSessionID(sessionID)
 	callbackURL := fmt.Sprintf("/callback?request_token=bad-token&session_id=%s", signedID)
 	req := httptest.NewRequest(http.MethodGet, callbackURL, nil)
 	rr := httptest.NewRecorder()
@@ -1273,7 +1273,7 @@ func TestHandleKiteCallback_TemplateRenderFailure(t *testing.T) {
 	kd, _ := m.GetSession(sessionID)
 	kd.Kite.SetBaseURI(ts.URL)
 
-	signedID := m.SessionSigner.SignSessionID(sessionID)
+	signedID := m.Identity.Signer.SignSessionID(sessionID)
 	callbackURL := fmt.Sprintf("/callback?request_token=mock-token&session_id=%s", signedID)
 	req := httptest.NewRequest(http.MethodGet, callbackURL, nil)
 	rr := httptest.NewRecorder()

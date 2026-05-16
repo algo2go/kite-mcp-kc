@@ -558,12 +558,12 @@ func TestSessionSigner_SignAndVerifyRedirectParams_Final(t *testing.T) {
 	defer m.Shutdown()
 
 	genID := m.GenerateSession()
-	params, pErr := m.SessionSigner.SignRedirectParams(genID)
+	params, pErr := m.Identity.Signer.SignRedirectParams(genID)
 	if pErr != nil {
 		t.Fatalf("SignRedirectParams error: %v", pErr)
 	}
 
-	resultID, vErr := m.SessionSigner.VerifyRedirectParams(params)
+	resultID, vErr := m.Identity.Signer.VerifyRedirectParams(params)
 	if vErr != nil {
 		t.Fatalf("VerifyRedirectParams error: %v", vErr)
 	}

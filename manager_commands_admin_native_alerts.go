@@ -91,7 +91,7 @@ func resolveNativeAlertClientForBus(sessionSvc *SessionService, email string) (u
 // native-alert clients. Currently a 1-line delegator to the package-level
 // helper.
 func (m *Manager) resolveNativeAlertClient(email string) (usecases.NativeAlertClient, error) {
-	return resolveNativeAlertClientForBus(m.SessionSvc, email)
+	return resolveNativeAlertClientForBus(m.Identity.Session, email)
 }
 
 // registerAdminNativeAlertsCommandsOnBus is the package-level pure-function
@@ -182,7 +182,7 @@ func registerAdminNativeAlertsCommandsOnBus(
 // registrar (Tier 2.3 slice 6/6).
 func (m *Manager) registerNativeAlertCommands() error {
 	return registerAdminNativeAlertsCommandsOnBus(m.commandBus, AdminNativeAlertsRegistrarDeps{
-		SessionSvc:       m.SessionSvc,
+		SessionSvc:       m.Identity.Session,
 		DispatcherGetter: m.eventing.Dispatcher,
 		EventStoreGetter: m.eventing.Store,
 	}, m.Logger)

@@ -57,7 +57,7 @@ func newSchedulingService(m *Manager) *SchedulingService {
 	return &SchedulingService{
 		getLogger:         func() *slog.Logger { return m.Logger },
 		setSessionManager: func(sm *SessionRegistry) { m.SessionManager = sm },
-		getSessionSvc:     func() *SessionService { return m.SessionSvc },
+		getSessionSvc:     func() *SessionService { return m.Identity.Session },
 		getMetrics:        func() *metrics.Manager { return m.metrics },
 	}
 }

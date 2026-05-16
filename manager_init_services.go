@@ -70,20 +70,20 @@ func (m *Manager) initFocusedServices(cfg Config, instrumentsManager *instrument
 	if cfg.Metrics != nil {
 		metricsImpl = cfg.Metrics
 	}
-	m.SessionSvc = NewSessionService(SessionServiceConfig{
-		CredentialSvc: m.CredentialSvc,
+	m.Identity.Session = NewSessionService(SessionServiceConfig{
+		CredentialSvc: m.Identity.Credential,
 		TokenStore:    m.tokenStore,
-		SessionSigner: m.SessionSigner,
+		SessionSigner: m.Identity.Signer,
 		Logger:        cfg.Logger,
 		Metrics:       metricsImpl,
 		DevMode:       cfg.DevMode,
 	})
-	m.SessionSvc.SetSessionManager(m.SessionManager)
-	m.ManagedSessionSvc = NewManagedSessionService(m.SessionManager)
+	m.Identity.Session.SetSessionManager(m.SessionManager)
+	m.Identity.ManagedSession = NewManagedSessionService(m.SessionManager)
 
 	// Initialize portfolio and order services
-	m.PortfolioSvc = NewPortfolioService(m.SessionSvc, cfg.Logger)
-	m.OrderSvc = NewOrderService(m.SessionSvc, cfg.Logger)
+	m.PortfolioSvc = NewPortfolioService(m.Identity.Session, cfg.Logger)
+	m.OrderSvc = NewOrderService(m.Identity.Session, cfg.Logger)
 
 	// AlertSvc was constructed empty in newEmptyManager and populated
 	// in-place by the earlier alert/persistence/telegram init phases
@@ -110,7 +110,7 @@ func (m *Manager) initSessionPersistence(cfg Config) {
 func (m *Manager) initTokenRotation() {
 	m.tokenStore.OnChange(func(email string, entry *KiteTokenEntry) {
 		if m.tickerService.IsRunning(email) {
-			apiKey := m.CredentialSvc.GetAPIKeyForEmail(email)
+			apiKey := m.Identity.Credential.GetAPIKeyForEmail(email)
 			if err := m.tickerService.UpdateToken(email, apiKey, entry.AccessToken); err != nil {
 				m.Logger.Error("Failed to update ticker token", "email", email, "error", err)
 			} else {

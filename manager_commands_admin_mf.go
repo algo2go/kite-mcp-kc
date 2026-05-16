@@ -124,7 +124,7 @@ func registerAdminMFCommandsOnBus(
 // registrar (Tier 2.3 slice 4/6).
 func (m *Manager) registerMFCommands() error {
 	return registerAdminMFCommandsOnBus(m.commandBus, AdminMFRegistrarDeps{
-		SessionSvc:       m.SessionSvc,
+		SessionSvc:       m.Identity.Session,
 		DispatcherGetter: m.eventing.Dispatcher,
 		EventStoreGetter: m.eventing.Store,
 	}, m.Logger)

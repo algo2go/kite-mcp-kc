@@ -339,7 +339,7 @@ func TestNewWithOptions_WithSessionSigner_UsesSupplied(t *testing.T) {
 	)
 	require.NoError(t, err)
 	require.NotNil(t, mgr)
-	assert.Same(t, customSigner, mgr.SessionSigner,
+	assert.Same(t, customSigner, mgr.Identity.Signer,
 		"supplied signer must be the one the manager exposes")
 }
 
@@ -355,7 +355,7 @@ func TestNewWithOptions_NoSessionSigner_GeneratesFresh(t *testing.T) {
 	)
 	require.NoError(t, err)
 	require.NotNil(t, mgr)
-	require.NotNil(t, mgr.SessionSigner,
+	require.NotNil(t, mgr.Identity.Signer,
 		"omitting WithSessionSigner must produce a fresh generated signer")
 }
 

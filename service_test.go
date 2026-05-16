@@ -227,7 +227,7 @@ func TestManager_ExtractCallbackParams_ValidSignature(t *testing.T) {
 
 	// Generate a valid session and sign it
 	sessionID := m.GenerateSession()
-	signed := m.SessionSigner.SignSessionID(sessionID)
+	signed := m.Identity.Signer.SignSessionID(sessionID)
 
 	req := httptest.NewRequest(http.MethodGet, "/callback?request_token=tok123&session_id="+signed, nil)
 	rt, sid, err := m.extractCallbackParams(req)

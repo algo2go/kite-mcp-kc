@@ -70,6 +70,7 @@ func newEmptyManager(cfg Config) *Manager {
 		tokenStore:        NewKiteTokenStore(),
 		credentialStore:   NewKiteCredentialStore(),
 		AlertSvc:          NewEmptyAlertService(),
+		Identity:          newEmptyIdentityService(),
 		commandBus:        cqrs.NewInMemoryBus(cqrs.LoggingMiddleware(cfg.Logger)),
 		queryBus:          cqrs.NewInMemoryBus(cqrs.LoggingMiddleware(cfg.Logger)),
 	}
@@ -87,7 +88,7 @@ func newEmptyManager(cfg Config) *Manager {
 	m.eventing = newEventingService(m)
 	m.brokers = newBrokerServices(m)
 	m.scheduling = newSchedulingService(m)
-	m.sessionLifecycle = newSessionLifecycleService(m)
+	m.Identity.Lifecycle = newSessionLifecycleService(m)
 	return m
 }
 

@@ -78,7 +78,7 @@ func (m *Manager) initSideStores(cfg Config) {
 // pass brings pre-registry self-provisioned keys into the new registry
 // store so later lookups are uniform.
 func (m *Manager) initCredentialService(cfg Config) {
-	m.CredentialSvc = NewCredentialService(CredentialServiceConfig{
+	m.Identity.Credential = NewCredentialService(CredentialServiceConfig{
 		APIKey:          cfg.APIKey,
 		APISecret:       cfg.APISecret,
 		AccessToken:     cfg.AccessToken,
@@ -89,14 +89,14 @@ func (m *Manager) initCredentialService(cfg Config) {
 	})
 
 	// Backfill registry from existing credentials (handles pre-registry self-provisioned keys)
-	m.CredentialSvc.BackfillRegistryFromCredentials()
+	m.Identity.Credential.BackfillRegistryFromCredentials()
 
 	// Wire the order modifier: creates a Kite client from cached tokens.
 	// This depends on CredentialSvc existing — that's why it lives here
 	// rather than in initTrailingStop above.
 	m.AlertSvc.trailingStopMgr.SetModifier(func(email string) (alerts.KiteOrderModifier, error) {
-		apiKey := m.CredentialSvc.GetAPIKeyForEmail(email)
-		accessToken := m.CredentialSvc.GetAccessTokenForEmail(email)
+		apiKey := m.Identity.Credential.GetAPIKeyForEmail(email)
+		accessToken := m.Identity.Credential.GetAccessTokenForEmail(email)
 		if accessToken == "" {
 			return nil, fmt.Errorf("no Kite access token for %s", email)
 		}

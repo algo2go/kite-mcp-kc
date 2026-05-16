@@ -70,24 +70,20 @@ type Manager struct {
 	templates map[string]*template.Template
 
 	// Focused service objects (Clean Architecture)
-	CredentialSvc     *CredentialService     // credential resolution (per-user + global)
-	SessionSvc        *SessionService        // MCP session lifecycle
-	ManagedSessionSvc *ManagedSessionService // thin session facade (active count, terminate-by-email)
-	PortfolioSvc      *PortfolioService      // portfolio queries (holdings, positions, margins, profile)
-	OrderSvc          *OrderService          // order placement, modification, cancellation
-	AlertSvc          *AlertService          // alert lifecycle (CRUD, evaluation, trailing stops, Telegram, P&L)
-	FamilyService     *FamilyService         // family billing (invite, remove, list, tier resolution)
+	Identity      *IdentityService // identity bundle: Credential / Session / ManagedSession / Signer / Lifecycle (Tier B Step 4)
+	PortfolioSvc  *PortfolioService // portfolio queries (holdings, positions, margins, profile)
+	OrderSvc      *OrderService     // order placement, modification, cancellation
+	AlertSvc      *AlertService     // alert lifecycle (CRUD, evaluation, trailing stops, Telegram, P&L)
+	FamilyService *FamilyService    // family billing (invite, remove, list, tier resolution)
 
 	// Decomposed facades over the raw fields below (Task 7 — Manager decomposition)
-	stores           *StoreRegistry           // all persistence stores
-	eventing         *EventingService         // domain event dispatcher + append-only store
-	brokers          *BrokerServices          // kite factory, instruments, ticker, paper, riskguard
-	scheduling       *SchedulingService       // cleanup routines, session cleanup hooks, metrics recording
-	sessionLifecycle *SessionLifecycleService // MCP session lifecycle facade (get/create/clear/complete)
+	stores     *StoreRegistry     // all persistence stores
+	eventing   *EventingService   // domain event dispatcher + append-only store
+	brokers    *BrokerServices    // kite factory, instruments, ticker, paper, riskguard
+	scheduling *SchedulingService // cleanup routines, session cleanup hooks, metrics recording
 
 	Instruments       *instruments.Manager
 	SessionManager    *SessionRegistry
-	SessionSigner     *SessionSigner
 	tokenStore        *KiteTokenStore             // per-email Kite token cache
 	credentialStore   *KiteCredentialStore        // per-email Kite developer app credentials
 	tickerService     *ticker.Service             // per-user WebSocket ticker connections
@@ -129,7 +125,15 @@ type Manager struct {
 	// AlertService. They are now reachable as m.AlertSvc.<Accessor>() or
 	// via the existing Manager-level delegators (m.AlertStore(),
 	// m.AlertDB(), m.TelegramNotifier(), m.TrailingStopManager(), etc.).
-	// Manager field count reduced 49 → 43 by this move. encryptionKey
-	// stays on Manager because it crosses cluster boundaries — also used
-	// for TOTP MFA secrets via users.Store (see kc/users/mfa.go).
+	// encryptionKey stays on Manager because it crosses cluster boundaries
+	// — also used for TOTP MFA secrets via users.Store (see kc/users/mfa.go).
+	//
+	// Tier B Step 4 (2026-05-16): the 5 identity/session fields that
+	// previously lived here (CredentialSvc, SessionSvc, ManagedSessionSvc,
+	// SessionSigner, sessionLifecycle) have been absorbed into IdentityService.
+	// They are now reachable as m.Identity.{Credential, Session,
+	// ManagedSession, Signer, Lifecycle}. Manager field count reduced
+	// 43 → 38 by this move. SessionManager stays on Manager (per preflight
+	// §2.4) because it has 4 external direct-readers in
+	// kite-mcp-bootstrap / kite-mcp-usecases.
 }

@@ -26,7 +26,7 @@ import (
 // the prior `manager.SessionSvc().GetBrokerForEmail(email)` two-hop
 // at all 4 cross-package call sites.
 func (m *Manager) GetBrokerForEmail(email string) (broker.Client, error) {
-	return m.SessionSvc.GetBrokerForEmail(email)
+	return m.Identity.Session.GetBrokerForEmail(email)
 }
 
 // HasBrokerFactory reports whether the underlying SessionService has
@@ -35,7 +35,7 @@ func (m *Manager) GetBrokerForEmail(email string) (broker.Client, error) {
 // prior `manager.SessionSvc().HasBrokerFactory()` two-hop at the
 // app/http.go:720 call site.
 func (m *Manager) HasBrokerFactory() bool {
-	return m.SessionSvc.HasBrokerFactory()
+	return m.Identity.Session.HasBrokerFactory()
 }
 
 // SetFamilyService sets the family billing service. Anchor 6 PR 6.12:

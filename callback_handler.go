@@ -67,7 +67,7 @@ func (m *Manager) extractCallbackParams(r *http.Request) (kiteRequestToken, mcpS
 	}
 
 	// Verify the signed session ID
-	mcpSessionID, err = m.SessionSigner.VerifySessionID(signedSessionID)
+	mcpSessionID, err = m.Identity.Signer.VerifySessionID(signedSessionID)
 	if err != nil {
 		m.Logger.Error("Failed to verify session signature", "error", err)
 		return "", "", fmt.Errorf("invalid or tampered session parameter: %w", err)

@@ -28,7 +28,7 @@ func TestHandleKiteCallback_SessionNotFound_WithValidSig(t *testing.T) {
 	defer m.Shutdown()
 
 	// Sign a session ID that doesn't exist
-	signed := m.SessionSigner.SignSessionID("nonexistent-session-id")
+	signed := m.Identity.Signer.SignSessionID("nonexistent-session-id")
 
 	handler := m.HandleKiteCallback()
 	req := httptest.NewRequest(http.MethodGet, "/callback?request_token=tok&session_id="+signed, nil)
@@ -58,7 +58,7 @@ func TestInitializeSessionSigner_Custom(t *testing.T) {
 	if err != nil {
 		t.Fatalf("initializeSessionSigner error: %v", err)
 	}
-	if m.SessionSigner != customSigner {
+	if m.Identity.Signer != customSigner {
 		t.Error("Expected custom signer to be set")
 	}
 }
@@ -76,7 +76,7 @@ func TestInitializeSessionSigner_AutoGenerate_Boost(t *testing.T) {
 	if err != nil {
 		t.Fatalf("initializeSessionSigner (auto) error: %v", err)
 	}
-	if m.SessionSigner == nil {
+	if m.Identity.Signer == nil {
 		t.Error("Session signer should be auto-generated")
 	}
 }
@@ -403,7 +403,7 @@ func TestSessionService_GetSession_ValidationError(t *testing.T) {
 	}
 	defer m.Shutdown()
 
-	_, err = m.SessionSvc.GetSession("invalid-session-id")
+	_, err = m.Identity.Session.GetSession("invalid-session-id")
 	if err == nil {
 		t.Error("Expected error for invalid session")
 	}
@@ -422,7 +422,7 @@ func TestSessionService_ClearSessionData_NoSession(t *testing.T) {
 	}
 	defer m.Shutdown()
 
-	err = m.SessionSvc.ClearSessionData("nonexistent-session")
+	err = m.Identity.Session.ClearSessionData("nonexistent-session")
 	if err == nil {
 		t.Error("Expected error for non-existent session")
 	}
@@ -442,7 +442,7 @@ func TestSessionService_ClearSessionData_Success_Gap(t *testing.T) {
 	defer m.Shutdown()
 
 	sessionID := m.GenerateSession()
-	err = m.SessionSvc.ClearSessionData(sessionID)
+	err = m.Identity.Session.ClearSessionData(sessionID)
 	if err != nil {
 		t.Errorf("Expected no error, got: %v", err)
 	}
@@ -463,7 +463,7 @@ func TestSessionService_SessionLoginURL_SignerError(t *testing.T) {
 
 	// Test with valid session — should succeed
 	sessionID := m.GenerateSession()
-	loginURL, err := m.SessionSvc.SessionLoginURL(sessionID)
+	loginURL, err := m.Identity.Session.SessionLoginURL(sessionID)
 	if err != nil {
 		t.Errorf("Expected no error, got: %v", err)
 	}
@@ -486,7 +486,7 @@ func TestSessionService_GetOrCreateSessionWithEmail(t *testing.T) {
 	defer m.Shutdown()
 
 	sessionID := m.GenerateSession()
-	data, isNew, err := m.SessionSvc.GetOrCreateSessionWithEmail(sessionID, "user@test.com")
+	data, isNew, err := m.Identity.Session.GetOrCreateSessionWithEmail(sessionID, "user@test.com")
 	if err != nil {
 		t.Fatalf("GetOrCreateSessionWithEmail error: %v", err)
 	}
@@ -516,7 +516,7 @@ func TestInitializeSessionSigner_CustomSigner_C98(t *testing.T) {
 	if err != nil {
 		t.Fatalf("initializeSessionSigner with custom: %v", err)
 	}
-	if m.SessionSigner != custom {
+	if m.Identity.Signer != custom {
 		t.Error("Expected custom signer to be used")
 	}
 }
@@ -534,7 +534,7 @@ func TestInitializeSessionSigner_AutoGenerate_C98(t *testing.T) {
 	if err != nil {
 		t.Fatalf("initializeSessionSigner auto: %v", err)
 	}
-	if m.SessionSigner == nil {
+	if m.Identity.Signer == nil {
 		t.Error("Session signer should be auto-generated")
 	}
 }

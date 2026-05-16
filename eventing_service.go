@@ -60,7 +60,7 @@ func newEventingService(m *Manager) *EventingService {
 		setStore:      func(s *eventsourcing.EventStore) { m.eventStore = s },
 
 		getProjector:       func() *eventsourcing.Projector { return m.projector },
-		getSessionSvc:      func() *SessionService { return m.SessionSvc },
+		getSessionSvc:      func() *SessionService { return m.Identity.Session },
 		getTrailingStopMgr: func() *alerts.TrailingStopManager { return m.AlertSvc.trailingStopMgr },
 
 		// Tier B Step 2: single closure over OrderSvc replaces the 8

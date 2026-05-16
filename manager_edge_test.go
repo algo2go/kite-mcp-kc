@@ -32,7 +32,7 @@ func TestManager_UpdateSessionSignerExpiry(t *testing.T) {
 	}
 	defer m.Shutdown()
 
-	m.SessionSigner.SetSignatureExpiry(1 * time.Hour)
+	m.Identity.Signer.SetSignatureExpiry(1 * time.Hour)
 	// Should not panic
 }
 
@@ -1343,7 +1343,7 @@ func TestPortfolioService_BrokerCallErrors(t *testing.T) {
 		AccessToken: "fake-token",
 	})
 
-	ps := NewPortfolioService(m.SessionSvc, testLogger())
+	ps := NewPortfolioService(m.Identity.Session, testLogger())
 
 	_, err := ps.GetHoldings("broker-fail@test.com")
 	if err == nil {
@@ -1386,7 +1386,7 @@ func TestOrderService_BrokerCallErrors(t *testing.T) {
 	kd.Kite.SetAccessToken("fake-token")
 	m.TokenStore().Set("order-fail@test.com", &KiteTokenEntry{AccessToken: "fake-token"})
 
-	os := NewOrderService(m.SessionSvc, testLogger())
+	os := NewOrderService(m.Identity.Session, testLogger())
 
 	_, err := os.PlaceOrder("order-fail@test.com", broker.OrderParams{
 		Exchange: "NSE", Tradingsymbol: "SBIN", TransactionType: "BUY",
@@ -1491,7 +1491,7 @@ func TestClearSessionData_WithData(t *testing.T) {
 		t.Fatal("Expected session data")
 	}
 
-	err := m.SessionSvc.ClearSessionData(sid)
+	err := m.Identity.Session.ClearSessionData(sid)
 	if err != nil {
 		t.Fatalf("ClearSessionData: %v", err)
 	}
@@ -1713,7 +1713,7 @@ func TestManagerAccessors(t *testing.T) {
 	if m.SessionManager == nil {
 		t.Error("SessionManager should not be nil")
 	}
-	if m.SessionSigner == nil {
+	if m.Identity.Signer == nil {
 		t.Error("SessionSigner should not be nil")
 	}
 }
