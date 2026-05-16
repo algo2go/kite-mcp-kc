@@ -76,6 +76,26 @@ func (m *Manager) QueryBus() *cqrs.InMemoryBus {
 // Session registry + signer
 // ---------------------------------------------------------------------------
 
+// SessionRegistry returns the concrete session registry. Added so that
+// *Manager satisfies ports.SessionRegistryProvider — the Provider port
+// that Phase 3 sub-git brief 3 (kite-mcp-tools-ops) consumes via
+// ToolHandlerDeps in kite-mcp-tools-common, replacing the two residual
+// `manager.SessionManager` field-access call sites in
+// mcp/misc/session_admin_tools.go (admin operations like
+// ListActiveSessions, TerminateByEmail).
+//
+// The field `SessionManager *SessionRegistry` (manager_struct.go:91)
+// remains the canonical home — this method is a thin one-line
+// passthrough so that the abstract Provider-port surface is satisfied
+// without breaking direct-field consumers (which the B4 work
+// established as the preferred internal access pattern).
+//
+// Identifier discipline: the method name `SessionRegistry` is distinct
+// from the field name `SessionManager`, so no Go method/field collision.
+func (m *Manager) SessionRegistry() *SessionRegistry {
+	return m.SessionManager
+}
+
 // ---------------------------------------------------------------------------
 // MCP server handle (for elicitation)
 // ---------------------------------------------------------------------------

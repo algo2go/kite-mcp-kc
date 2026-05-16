@@ -10,9 +10,11 @@ import "github.com/algo2go/kite-mcp-kc"
 // ports-package imports; only ports imports kc, keeping the graph
 // acyclic.
 var (
-	_ SessionPort    = (*kc.Manager)(nil)
-	_ CredentialPort = (*kc.Manager)(nil)
-	_ AlertPort      = (*kc.Manager)(nil)
-	_ OrderPort      = (*kc.Manager)(nil)
-	_ InstrumentPort = (*kc.Manager)(nil)
+	_ SessionPort                = (*kc.Manager)(nil)
+	_ CredentialPort             = (*kc.Manager)(nil)
+	_ AlertPort                  = (*kc.Manager)(nil)
+	_ OrderPort                  = (*kc.Manager)(nil)
+	_ InstrumentPort             = (*kc.Manager)(nil)
+	_ AuditStoreConcreteProvider = (*kc.Manager)(nil)
+	_ SessionRegistryProvider    = (*kc.Manager)(nil)
 )
